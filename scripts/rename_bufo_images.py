@@ -50,6 +50,7 @@ def main() -> int:
 
     copied = 0
     skipped = 0
+    skipped_existing = 0
     for path in sorted(source_dir.iterdir()):
         if not path.is_file():
             continue
@@ -65,14 +66,17 @@ def main() -> int:
         destination = target_dir / f"{new_stem}{path.suffix.lower()}"
 
         if destination.exists():
-            print(f"error: destination already exists: {destination.name}", file=sys.stderr)
-            return 1
+            print(f"Skipped (already exists): {destination.name}")
+            skipped_existing += 1
+            continue
 
         shutil.copy2(path, destination)
         print(f"Copied {path.name} -> {destination.name}")
         copied += 1
 
     print(f"Wrote {copied} frog files to {target_dir}.")
+    if skipped_existing:
+        print(f"Skipped {skipped_existing} image files because destination already exists.")
     if skipped:
         print(f"Skipped {skipped} image files that did not match known bufo patterns.", file=sys.stderr)
     return 0
