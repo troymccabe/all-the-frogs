@@ -8,12 +8,33 @@ IMAGE_EXTENSIONS = {".gif", ".jpg", ".jpeg", ".png", ".webp", ".svg"}
 
 
 def rename_stem(stem: str) -> str | None:
-    if not stem.startswith("bufo-"):
-        return None
-    thing = stem.removeprefix("bufo-")
-    if not thing:
-        return None
-    return f"{thing}-frog"
+    if stem.startswith("bufo-"):
+        thing = stem.removeprefix("bufo-")
+        if not thing:
+            return None
+        return f"{thing}-frog"
+
+    if stem.startswith("bufo"):
+        thing = stem.removeprefix("bufo").lstrip("-_")
+        if not thing:
+            return "frog"
+        return f"{thing}-frog"
+
+    if stem.endswith("-bufo"):
+        thing = stem.removesuffix("-bufo")
+        if not thing:
+            return None
+        return f"{thing}-frog"
+
+    if "-" not in stem:
+        if stem in {"bufo", "boofo"}:
+            return "frog"
+        if "boofo" in stem:
+            return stem.replace("boofo", "frog", 1)
+        if "bufo" in stem:
+            return stem.replace("bufo", "frog", 1)
+
+    return None
 
 
 def main() -> int:
@@ -28,6 +49,7 @@ def main() -> int:
     target_dir.mkdir(exist_ok=True)
 
     copied = 0
+    skipped = 0
     for path in sorted(source_dir.iterdir()):
         if not path.is_file():
             continue
@@ -36,6 +58,8 @@ def main() -> int:
 
         new_stem = rename_stem(path.stem)
         if new_stem is None:
+            print(f"Skipped (unmatched filename): {path.name}", file=sys.stderr)
+            skipped += 1
             continue
 
         destination = target_dir / f"{new_stem}{path.suffix.lower()}"
@@ -49,6 +73,8 @@ def main() -> int:
         copied += 1
 
     print(f"Wrote {copied} frog files to {target_dir}.")
+    if skipped:
+        print(f"Skipped {skipped} image files that did not match known bufo patterns.", file=sys.stderr)
     return 0
 
 
